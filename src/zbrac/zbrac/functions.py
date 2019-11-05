@@ -50,6 +50,18 @@ def save_treatment_file(treatment_text, filepath, encoding = "UTF-8"):
     print('Saved treatment file:' + filepath)
 
 
+def remove_escapes(stringvar):
+    return(stringvar.replace('\\"','\"').replace('\\\\','\\'))
+
+def add_escapes(stringvar):
+    return(stringvar.replace('\\','\\\\').replace('\"','\\"'))
+
+def add_escapes_dict(dictionary):
+    escaped_dict = dict()
+    for key in dictionary:
+        escaped_dict[add_escapes(key)] = add_escapes(dictionary[key])
+    return escaped_dict
+
 def get_matched_entries(textblock):
     matched_items = re.findall("\[\[.*?\]\]", textblock)
     if not matched_items:
@@ -58,16 +70,18 @@ def get_matched_entries(textblock):
     unique_matched_items.sort()
     print('    Grabbed following keywords:')
     print('  ' + '-' * 35)
-    for item in unique_matched_items: print('    ' + item)
+    for item in unique_matched_items: print('    ' + remove_escapes(item))
     print('-' * 35)
     print(str(len(unique_matched_items)) + ' items in total')
     print('')
     return(unique_matched_items)
 
+
 def create_own_list(keywordlist):
     try:
-        stripped_keywordlist = list(map(lambda each:each.replace('[[','').replace(']]',''), keywordlist))
-        return([keywordlist,stripped_keywordlist])
+        escaped_keywordlist = list(map(remove_escapes, keywordlist))
+        stripped_keywordlist = list(map(lambda each:each.replace('[[','').replace(']]',''), escaped_keywordlist))
+        return([escaped_keywordlist,stripped_keywordlist])
     except:
         if keywordlist == False:
             print('!!Error: Some problem occurred. This might be due to an empty list of keywords.')
@@ -118,6 +132,7 @@ def xlsx_to_dictionary(filepath):
             return
         print('  ' + '-' * 35)
         print(str(len(language_dict)) + ' items in total')
+        language_dict = add_escapes_dict(language_dict)
         return (language_dict)
     except:
         print("Error: A problem occured with reading excel file. Does it contain the keys as the first column and the text in second column?")
@@ -185,7 +200,7 @@ def implement_language_file(path_treatment_in, path_language_in, path_treatment_
 def strip_brackets(source_text):
     matched_entries = get_matched_entries(source_text)
     language_list = create_own_list(matched_entries)
-    language_dict = list_to_dict(language_list)
+    language_dict = add_escapes_dict(list_to_dict(language_list))
     target_text = replace_from_dictionary(language_dict, source_text)
     return(target_text)
 
